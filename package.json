@@ -5,7 +5,7 @@
   "license": "MIT",
   "scripts": {
     "dev": "tsx watch src/api-rest.ts",
-    "test": "vitest"
+    "test": "vitest --silent=false"
   },
   "devDependencies": {
     "@types/express": "^4.17.17",

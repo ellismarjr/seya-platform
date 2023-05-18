@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { validate } from './validator';
+import { validateCpf } from './validator';
 
 describe('Validator', () => {
   it.each([
@@ -7,7 +7,7 @@ describe('Validator', () => {
     '684.053.160-00',
     '746.971.314-01'
   ])('should be able to validate a valid CPF', (cpf) => {
-    const isValid = validate(cpf);
+    const isValid = validateCpf(cpf);
 
     expect(isValid).toBeTruthy();
   });
@@ -18,13 +18,13 @@ describe('Validator', () => {
     '684053160',
     '68405316026323728',
   ])('should be able to validate a invalid CPF', (cpf) => {
-    const isValid = validate(cpf);
+    const isValid = validateCpf(cpf);
 
     expect(isValid).toBeFalsy();
   });
 
   it('should be able to validate a invalid CPF with all digits equals', () => {
-    const isValid = validate('111.111.111-11');
+    const isValid = validateCpf('111.111.111-11');
 
     expect(isValid).toBeFalsy();
   });

@@ -1,5 +1,5 @@
 import express, { Request, Response } from 'express';
-import { validate } from './validator';
+import { Checkout } from './Checkout';
 
 interface Product {
   id: number;
@@ -34,58 +34,15 @@ const app = express();
 
 app.use(express.json());
 
-app.post('/checkout', (request: Request, response: Response) => {
-  try {
-    const output: Output = {
-      subtotal: 0,
-      total: 0,
-      freight: 0
-    };
-    if (request.body.items) {
-      for (const item of request.body.items) {
-        if (item.quantity <= 0) {
-          throw new Error('Invalid quantity');
-        }
-        if (request.body.items.filter((i: any) => i.idProduct === item.idProduct).length > 1) {
-          throw new Error('Duplicated item');
-        }
-        const productData = products.filter(product => product.id === item.idProduct);
-        if (productData[0].width <= 0 ||
-          productData[0].height <= 0 ||
-          productData[0].length <= 0) {
-          throw new Error('Invalid dimensions');
-        }
-        if (productData[0].weight <= 0) {
-          throw new Error('Invalid weight');
-        }
-        output.subtotal += productData[0].price * item.quantity;
-        if (request.body.from && request.body.to) {
-          const volume = productData[0].width / 100 * productData[0].height / 100 * productData[0].length / 100;
-          const density = productData[0].weight / volume;
-          let freight = volume * 1000 * (density / 100);
-          freight = Math.max(freight, 10);
-          output.freight += freight * item.quantity;
-        }
-      }
-    }
-    output.total = output.subtotal;
-    if (request.body.coupon) {
-      const couponData = coupons.find(coupon => coupon.code === request.body.coupon);
-      const today = new Date();
-      if (couponData && couponData.expire_date.getTime() >= today.getTime()) {
-        output.total -= output.total * (couponData.percentage / 100);
-      }
-    }
-    const isValid = validate(request.body.cpf);
-    if (!isValid) {
-      output.message = 'Invalid CPF';
-    }
-    output.total += output.freight;
-    response.json(output);
-  } catch (error: any) {
-    response.status(422).json({ message: error.message });
-  }
+app.post('/checkout', async (request: Request, response: Response) => {
+  const checkout = new Checkout();
 
+  try {
+    const output = await checkout.execute(request.body)
+    return response.json(output);
+  } catch (error: any) {
+    return response.status(422).json({ message: error.message });
+  }
 });
 
 export type Output = {
