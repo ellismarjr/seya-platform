@@ -1,9 +1,14 @@
-import pgPromise from "pg-promise";
 import { validateCpf } from "./validator";
+import { ProductRepository } from "./ProductRepository";
+import { CouponRepository } from "./CouponRepository";
 
 export class Checkout {
+  constructor(
+    readonly productRepository: ProductRepository,
+    readonly couponRepository: CouponRepository
+  ) { }
+
   async execute(input: Input): Promise<Output> {
-    const connection = pgPromise()("postgres://postgres:123456@localhost:5432/app")
     const output = {
       subtotal: 0,
       total: 0,
@@ -16,7 +21,7 @@ export class Checkout {
           for (const item of input.items) {
             if (item.quantity <= 0) throw new Error('Invalid quantity')
             if (input.items.filter((i: any) => i.idProduct === item.idProduct).length > 1) throw new Error('Duplicated item');
-            const [productData] = await connection.query('SELECT * FROM cccat11.product WHERE id_product = $1', item.idProduct);
+            const productData = await this.productRepository.get(item.idProduct);
             if (productData.width <= 0 ||
               productData.height <= 0 ||
               productData.length <= 0) {
@@ -35,8 +40,9 @@ export class Checkout {
         }
         output.total = output.subtotal;
         if (input.coupon) {
-          const [couponData] = await connection.query('SELECT * FROM cccat11.coupon WHERE code = $1', input.coupon);
+
           const today = new Date();
+          const couponData = await this.couponRepository.get(input.coupon);
           if (couponData && couponData.expire_date.getTime() >= today.getTime()) {
             output.total -= output.total * (couponData.percentage / 100);
           }

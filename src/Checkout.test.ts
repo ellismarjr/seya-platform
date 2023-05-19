@@ -1,15 +1,95 @@
 import { Checkout } from './Checkout';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { ProductRepositoryDatabase } from './ProductRepositoryDatabase';
+import { CouponRepositoryDatabase } from './CouponRepositoryDatabase';
+import { ProductRepository } from './ProductRepository';
+import { CouponRepository } from './CouponRepository';
 // invalid cpf: 406.302.170-27
 
 describe('Main', () => {
+  let checkout: Checkout;
+  beforeEach(() => {
+    const products: any = {
+      1: {
+        idProduct: 1,
+        description: 'A',
+        price: 1000,
+        width: 100,
+        height: 30,
+        length: 10,
+        weight: 3
+      },
+      2: {
+        idProduct: 2,
+        description: 'B',
+        price: 5000,
+        width: 50,
+        height: 50,
+        length: 50,
+        weight: 22
+      },
+      3: {
+        idProduct: 3,
+        description: 'C',
+        price: 30,
+        width: 10,
+        height: 10,
+        length: 10,
+        weight: 0.9
+      },
+      4: {
+        idProduct: 4,
+        description: 'D',
+        price: 30,
+        width: -10,
+        height: -10,
+        length: -10,
+        weight: 1
+      },
+      5: {
+        idProduct: 5,
+        description: 'E',
+        price: 30,
+        width: 10,
+        height: 10,
+        length: 10,
+        weight: -1
+      },
+    }
+    const productRepository: ProductRepository = {
+      get: async (idProduct: number) => {
+        return products[idProduct];
+      }
+    }
+
+    const coupons: any = {
+      'VALE20': {
+        code: 'VALE20',
+        percentage: 20,
+        expire_date: new Date('2023-10-01T10:00:00')
+      },
+      'VALE10': {
+        code: 'VALE10',
+        percentage: 10,
+        expire_date: new Date('2022-10-01T10:00:00')
+      }
+    }
+
+    const couponRepository: CouponRepository = {
+      get: async (code: string) => {
+        return coupons[code];
+      }
+    }
+
+    checkout = new Checkout(productRepository, couponRepository);
+  });
+
   it('should NOT accept a order with invalid CPF', async () => {
     const input = {
       cpf: '406.302.170-27',
       items: []
     }
 
-    const checkout = new Checkout();
     expect(() => checkout.execute(input)).rejects.toThrow(new Error('Invalid CPF'));
 
   });
@@ -20,7 +100,6 @@ describe('Main', () => {
       items: []
     }
 
-    const checkout = new Checkout();
     const output = await checkout.execute(input);
 
     expect(output.total).toBe(0);
@@ -36,7 +115,6 @@ describe('Main', () => {
       ]
     }
 
-    const checkout = new Checkout();
     const output = await checkout.execute(input);
 
     expect(output.total).toBe(6090);
@@ -53,7 +131,6 @@ describe('Main', () => {
       coupon: 'VALE20',
     }
 
-    const checkout = new Checkout();
     const output = await checkout.execute(input);
 
     expect(output.total).toBe(4872);
@@ -70,7 +147,6 @@ describe('Main', () => {
       coupon: 'VALE10',
     }
 
-    const checkout = new Checkout();
     const output = await checkout.execute(input);
 
     expect(output.total).toBe(6090);
@@ -87,7 +163,6 @@ describe('Main', () => {
       coupon: 'VALE5',
     }
 
-    const checkout = new Checkout();
     const output = await checkout.execute(input);
 
     expect(output.total).toBe(6090);
@@ -101,7 +176,6 @@ describe('Main', () => {
       ]
     }
 
-    const checkout = new Checkout();
     expect(() => checkout.execute(input)).rejects.toThrow(new Error('Invalid quantity'));
   });
 
@@ -114,7 +188,6 @@ describe('Main', () => {
       ]
     }
 
-    const checkout = new Checkout();
     expect(() => checkout.execute(input)).rejects.toThrow(new Error('Duplicated item'));
   });
 
@@ -129,7 +202,6 @@ describe('Main', () => {
       to: "22030060"
     }
 
-    const checkout = new Checkout();
     const output = await checkout.execute(input);
 
     expect(output.subtotal).toBe(6000);
@@ -149,7 +221,6 @@ describe('Main', () => {
       to: "22030060"
     }
 
-    const checkout = new Checkout();
     const output = await checkout.execute(input);
 
     expect(output.subtotal).toBe(6090);
@@ -165,7 +236,6 @@ describe('Main', () => {
       ]
     }
 
-    const checkout = new Checkout();
     expect(() => checkout.execute(input)).rejects.toThrow(new Error('Invalid dimensions'));
   });
 
@@ -177,7 +247,6 @@ describe('Main', () => {
       ]
     }
 
-    const checkout = new Checkout();
     expect(() => checkout.execute(input)).rejects.toThrow(new Error('Invalid weight'));
   });
 });
