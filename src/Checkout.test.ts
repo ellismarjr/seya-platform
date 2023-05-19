@@ -1,15 +1,23 @@
-import { Checkout } from './Checkout';
 import { beforeEach, describe, expect, it } from 'vitest';
+import sinon from 'sinon';
+import crypto from 'crypto';
+
+import { Checkout } from './Checkout';
 import { ProductRepositoryDatabase } from './ProductRepositoryDatabase';
-import { CouponRepositoryDatabase } from './CouponRepositoryDatabase';
 import { ProductRepository } from './ProductRepository';
 import { CouponRepository } from './CouponRepository';
-import sinon from 'sinon';
 import EmailGatewayConsole from './EmailGatewayConsole';
-// invalid cpf: 406.302.170-27
+import { GetOrder } from './GetOrder';
+import { OrderRepositoryDatabase } from './OrderRepositoryDatabase';
+import { Clock } from './Clock';
 
 describe('Main', () => {
   let checkout: Checkout;
+  let getOrder: GetOrder;
+  let orderRepository: OrderRepositoryDatabase;
+  let productRepository: ProductRepository;
+  let couponRepository: CouponRepository;
+
   beforeEach(() => {
     const products: any = {
       1: {
@@ -58,7 +66,7 @@ describe('Main', () => {
         weight: -1
       },
     }
-    const productRepository: ProductRepository = {
+    productRepository = {
       get: async (idProduct: number) => {
         return products[idProduct];
       }
@@ -77,13 +85,15 @@ describe('Main', () => {
       }
     }
 
-    const couponRepository: CouponRepository = {
+    couponRepository = {
       get: async (code: string) => {
         return coupons[code];
       }
     }
 
-    checkout = new Checkout(productRepository, couponRepository);
+    orderRepository = new OrderRepositoryDatabase();
+    checkout = new Checkout(productRepository, couponRepository, orderRepository);
+    getOrder = new GetOrder(orderRepository);
   });
 
   it('should NOT accept a order with invalid CPF', async () => {
@@ -317,5 +327,52 @@ describe('Main', () => {
     const output = await checkout.execute(input);
     expect(output.total).toBe(1000);
     productRepositoryMock.verify();
+  });
+
+  it('should be able to create a order with 3 products and get save order', async () => {
+    const idOrder = crypto.randomUUID();
+    const input = {
+      idOrder,
+      cpf: '503.348.770-16',
+      items: [
+        { idProduct: 1, quantity: 1 },
+        { idProduct: 2, quantity: 1 },
+        { idProduct: 3, quantity: 3 },
+      ]
+    }
+
+    await checkout.execute(input);
+    const output = await getOrder.execute(idOrder);
+    expect(output.total).toBe(6090);
+  });
+
+  it.only('should be able to create a order with 3 products and generate order id', async () => {
+    await orderRepository.clear();
+
+    checkout = new Checkout(productRepository, couponRepository, orderRepository);
+    await checkout.execute({
+      idOrder: crypto.randomUUID(),
+      cpf: '503.348.770-16',
+      items: [
+        { idProduct: 1, quantity: 1 },
+        { idProduct: 2, quantity: 1 },
+        { idProduct: 3, quantity: 3 },
+      ]
+    });
+
+    const idOrder = crypto.randomUUID();
+    const input = {
+      idOrder,
+      cpf: '503.348.770-16',
+      items: [
+        { idProduct: 1, quantity: 1 },
+        { idProduct: 2, quantity: 1 },
+        { idProduct: 3, quantity: 3 },
+      ],
+      date: new Date('2022-01-01T10:00:00')
+    }
+    await checkout.execute(input);
+    const output = await getOrder.execute(idOrder);
+    expect(output.code).toBe("202200000002");
   });
 });

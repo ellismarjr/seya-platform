@@ -3,14 +3,15 @@ import { ProductRepository } from "./ProductRepository";
 import { CouponRepository } from "./CouponRepository";
 import { ProductRepositoryDatabase } from "./ProductRepositoryDatabase";
 import { CouponRepositoryDatabase } from "./CouponRepositoryDatabase";
-import EmailGatewayConsole from "./EmailGatewayConsole";
-import { EmailGateway } from "./EmailGateway";
+import { OrderRepository } from "./OrderRepository";
+import { OrderRepositoryDatabase } from "./OrderRepositoryDatabase";
 
 export class Checkout {
   constructor(
     readonly productRepository: ProductRepository = new ProductRepositoryDatabase(),
     readonly couponRepository: CouponRepository = new CouponRepositoryDatabase(),
-    readonly emailGateway: EmailGateway = new EmailGatewayConsole()
+    readonly orderRepository: OrderRepository = new OrderRepositoryDatabase(),
+
   ) { }
 
   async execute(input: Input): Promise<Output> {
@@ -44,18 +45,26 @@ export class Checkout {
           }
         }
         output.total = output.subtotal;
+        const today = input.date || new Date();
         if (input.coupon) {
-
-          const today = new Date();
           const couponData = await this.couponRepository.get(input.coupon);
           if (couponData && couponData.expire_date.getTime() >= today.getTime()) {
             output.total -= output.total * (couponData.percentage / 100);
           }
         }
         output.total += output.freight;
-        if (input.email) {
-          await this.emailGateway.send("Purchase Success", "...", input.email, "junior@gmail.com");
+        let sequence = await this.orderRepository.count();
+        sequence++;
+        const code = `${today.getFullYear()}${new String(sequence).padStart(8, '0')}`;
+        const order = {
+          idOrder: input.idOrder,
+          code,
+          cpf: input.cpf,
+          total: output.total,
+          freight: output.freight,
+          items: input.items,
         }
+        await this.orderRepository.save(order);
         return output;
       } else {
         throw new Error('Invalid CPF');
@@ -72,6 +81,8 @@ type Items = {
 }
 
 type Input = {
+  idOrder?: string;
+  date?: Date;
   cpf: string;
   email?: string;
   items: Items[];
