@@ -4,6 +4,8 @@ import { ProductRepositoryDatabase } from './ProductRepositoryDatabase';
 import { CouponRepositoryDatabase } from './CouponRepositoryDatabase';
 import { ProductRepository } from './ProductRepository';
 import { CouponRepository } from './CouponRepository';
+import sinon from 'sinon';
+import EmailGatewayConsole from './EmailGatewayConsole';
 // invalid cpf: 406.302.170-27
 
 describe('Main', () => {
@@ -248,5 +250,72 @@ describe('Main', () => {
     }
 
     expect(() => checkout.execute(input)).rejects.toThrow(new Error('Invalid weight'));
+  });
+
+  // Test Pattern - Stub
+  it('should be able to create a order with 1 item with stub', async () => {
+    const productRepositoryStub = sinon.stub(ProductRepositoryDatabase.prototype, 'get').resolves({
+      idProduct: 1,
+      description: 'A',
+      price: 1000,
+    });
+
+    checkout = new Checkout()
+    const input = {
+      cpf: '503.348.770-16',
+      items: [
+        { idProduct: 1, quantity: 1 },
+      ]
+    }
+
+    const output = await checkout.execute(input);
+
+    expect(output.total).toBe(1000);
+    productRepositoryStub.restore();
+  });
+
+  it('should verify if email was sent with spy', async () => {
+    const productRepositoryStub = sinon.stub(ProductRepositoryDatabase.prototype, 'get').resolves({
+      idProduct: 1,
+      description: 'A',
+      price: 1000,
+    });
+    const emailGatewaySpy = sinon.spy(EmailGatewayConsole.prototype, 'send');
+
+    checkout = new Checkout()
+    const input = {
+      cpf: '503.348.770-16',
+      items: [
+        { idProduct: 1, quantity: 1 },
+      ],
+      email: 'john.doe@gmail.com'
+    }
+
+    const output = await checkout.execute(input);
+    expect(output.total).toBe(1000);
+    expect(emailGatewaySpy.calledWith("Purchase Success", "...", "john.doe@gmail.com", "junior@gmail.com")).toBe(true);
+    emailGatewaySpy.restore();
+    productRepositoryStub.restore();
+  });
+
+  it('should verify if email was sent with mock', async () => {
+    const productRepositoryMock = sinon.mock(ProductRepositoryDatabase.prototype);
+    productRepositoryMock.expects('get').once().resolves({
+      idProduct: 1,
+      description: 'A',
+      price: 1000,
+    });
+    checkout = new Checkout()
+    const input = {
+      cpf: '503.348.770-16',
+      items: [
+        { idProduct: 1, quantity: 1 },
+      ],
+
+    }
+
+    const output = await checkout.execute(input);
+    expect(output.total).toBe(1000);
+    productRepositoryMock.verify();
   });
 });

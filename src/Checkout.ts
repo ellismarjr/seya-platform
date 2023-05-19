@@ -1,11 +1,16 @@
 import { validateCpf } from "./validator";
 import { ProductRepository } from "./ProductRepository";
 import { CouponRepository } from "./CouponRepository";
+import { ProductRepositoryDatabase } from "./ProductRepositoryDatabase";
+import { CouponRepositoryDatabase } from "./CouponRepositoryDatabase";
+import EmailGatewayConsole from "./EmailGatewayConsole";
+import { EmailGateway } from "./EmailGateway";
 
 export class Checkout {
   constructor(
-    readonly productRepository: ProductRepository,
-    readonly couponRepository: CouponRepository
+    readonly productRepository: ProductRepository = new ProductRepositoryDatabase(),
+    readonly couponRepository: CouponRepository = new CouponRepositoryDatabase(),
+    readonly emailGateway: EmailGateway = new EmailGatewayConsole()
   ) { }
 
   async execute(input: Input): Promise<Output> {
@@ -48,6 +53,9 @@ export class Checkout {
           }
         }
         output.total += output.freight;
+        if (input.email) {
+          await this.emailGateway.send("Purchase Success", "...", input.email, "junior@gmail.com");
+        }
         return output;
       } else {
         throw new Error('Invalid CPF');
@@ -65,6 +73,7 @@ type Items = {
 
 type Input = {
   cpf: string;
+  email?: string;
   items: Items[];
   from?: string;
   to?: string;
