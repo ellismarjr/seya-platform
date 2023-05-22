@@ -6,7 +6,6 @@ import { Checkout } from './Checkout';
 import { ProductRepositoryDatabase } from './ProductRepositoryDatabase';
 import { ProductRepository } from './ProductRepository';
 import { CouponRepository } from './CouponRepository';
-import EmailGatewayConsole from './EmailGatewayConsole';
 import { GetOrder } from './GetOrder';
 import { OrderRepository } from './OrderRepository';
 import { Product } from './Product';
@@ -24,8 +23,6 @@ describe('Main', () => {
       1: new Product(1, 'A', 1000, 100, 30, 10, 3),
       2: new Product(2, 'B', 5000, 50, 50, 50, 22),
       3: new Product(3, 'C', 30, 10, 10, 10, 0.9),
-      4: new Product(4, 'D', 1000, 10, 10, 10, 1),
-      5: new Product(5, 'E', 30, 10, 10, 10, 1),
     }
     productRepository = {
       get: async (idProduct: number) => {
@@ -190,28 +187,6 @@ describe('Main', () => {
     expect(output.total).toBe(6120);
   });
 
-  it.skip('should NOT be able to create a order if he product has negative dimensions', async () => {
-    const input = {
-      cpf: '503.348.770-16',
-      items: [
-        { idProduct: 4, quantity: 1 },
-      ]
-    }
-
-    expect(() => checkout.execute(input)).rejects.toThrow(new Error('Invalid dimensions'));
-  });
-
-  it.skip('should NOT be able to create a order if he product has negative weight', async () => {
-    const input = {
-      cpf: '503.348.770-16',
-      items: [
-        { idProduct: 5, quantity: 1 },
-      ]
-    }
-
-    expect(() => checkout.execute(input)).rejects.toThrow(new Error('Invalid weight'));
-  });
-
   // Test Pattern - Stub
   it('should be able to create a order with 1 item with stub', async () => {
     const productRepositoryStub = sinon.stub(ProductRepositoryDatabase.prototype, 'get')
@@ -230,29 +205,6 @@ describe('Main', () => {
     const output = await checkout.execute(input);
 
     expect(output.total).toBe(1000);
-    productRepositoryStub.restore();
-  });
-
-  it.skip('should verify if email was sent with spy', async () => {
-    const productRepositoryStub = sinon.stub(ProductRepositoryDatabase.prototype, 'get')
-      .resolves(new Product(
-        1, 'A', 1000, 1, 1, 1, 1
-      ));
-    const emailGatewaySpy = sinon.spy(EmailGatewayConsole.prototype, 'send');
-
-    checkout = new Checkout()
-    const input = {
-      cpf: '503.348.770-16',
-      items: [
-        { idProduct: 1, quantity: 1 },
-      ],
-      email: 'john.doe@gmail.com'
-    }
-
-    const output = await checkout.execute(input);
-    expect(output.total).toBe(1000);
-    expect(emailGatewaySpy.calledWith("Purchase Success", "...", "john.doe@gmail.com", "junior@gmail.com")).toBe(true);
-    emailGatewaySpy.restore();
     productRepositoryStub.restore();
   });
 
@@ -292,35 +244,5 @@ describe('Main', () => {
     await checkout.execute(input);
     const output = await getOrder.execute(idOrder);
     expect(output.total).toBe(6090);
-  });
-
-  it.skip('should be able to create a order with 3 products and generate order id', async () => {
-    await orderRepository.clear();
-
-    checkout = new Checkout(productRepository, couponRepository, orderRepository);
-    await checkout.execute({
-      idOrder: crypto.randomUUID(),
-      cpf: '503.348.770-16',
-      items: [
-        { idProduct: 1, quantity: 1 },
-        { idProduct: 2, quantity: 1 },
-        { idProduct: 3, quantity: 3 },
-      ]
-    });
-
-    const idOrder = crypto.randomUUID();
-    const input = {
-      idOrder,
-      cpf: '503.348.770-16',
-      items: [
-        { idProduct: 1, quantity: 1 },
-        { idProduct: 2, quantity: 1 },
-        { idProduct: 3, quantity: 3 },
-      ],
-      date: new Date('2022-01-01T10:00:00')
-    }
-    await checkout.execute(input);
-    const output = await getOrder.execute(idOrder);
-    expect(output.code).toBe("202200000002");
   });
 });

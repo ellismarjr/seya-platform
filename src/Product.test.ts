@@ -12,11 +12,11 @@ describe('Product', () => {
     expect(product.getDensity()).toBe(100);
   });
 
-  it.skip('should NOT be able to create product with invalid dimensions', () => {
+  it('should NOT be able to create product with invalid dimensions', () => {
     expect(() => new Product(1, "A", 1000, -100, -30, -10, 3)).toThrow('Invalid dimensions');
   });
 
-  it.skip('should NOT be able to create product with invalid weight', () => {
+  it('should NOT be able to create product with invalid weight', () => {
     expect(() => new Product(1, "A", 1000, 100, 30, 10, -3)).toThrow('Invalid weight');
   });
 });

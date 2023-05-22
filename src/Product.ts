@@ -8,12 +8,12 @@ export class Product {
     readonly length: number,
     readonly weight: number
   ) {
-    // if (this.width <= 0 ||
-    //   this.height <= 0 ||
-    //   this.length <= 0) {
-    //   throw new Error('Invalid dimensions');
-    // }
-    // if (this.weight <= 0) throw new Error('Invalid weight');
+    if (this.width <= 0 ||
+      this.height <= 0 ||
+      this.length <= 0) {
+      throw new Error('Invalid dimensions');
+    }
+    if (this.weight <= 0) throw new Error('Invalid weight');
   }
 
   getVolume() {
