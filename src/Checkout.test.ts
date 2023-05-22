@@ -10,39 +10,19 @@ import { GetOrder } from './GetOrder';
 import { OrderRepository } from './OrderRepository';
 import { Product } from './Product';
 import { Coupon } from './Coupon';
+import { DatabaseRepositoryFactory } from './DatabaseRepositoryFactory';
+import { RepositoryFactory } from './RepositoryFactory';
 
 describe('Main', () => {
   let checkout: Checkout;
   let getOrder: GetOrder;
-  let orderRepository: OrderRepository;
-  let productRepository: ProductRepository;
-  let couponRepository: CouponRepository;
+  let repositoryFactory: RepositoryFactory;
+
 
   beforeEach(() => {
-    const products: any = {
-      1: new Product(1, 'A', 1000, 100, 30, 10, 3),
-      2: new Product(2, 'B', 5000, 50, 50, 50, 22),
-      3: new Product(3, 'C', 30, 10, 10, 10, 0.9),
-    }
-    productRepository = {
-      get: async (idProduct: number) => {
-        return products[idProduct];
-      }
-    }
-
-    const coupons: any = {
-      'VALE20': new Coupon('VALE20', 20, new Date('2023-10-01T10:00:00')),
-      'VALE10': new Coupon('VALE10', 10, new Date('2022-10-01T10:00:00')),
-    }
-
-    couponRepository = {
-      get: async (code: string) => {
-        return coupons[code];
-      }
-    }
-
-    checkout = new Checkout(productRepository, couponRepository, orderRepository);
-    getOrder = new GetOrder(orderRepository);
+    repositoryFactory = new DatabaseRepositoryFactory();
+    checkout = new Checkout(repositoryFactory);
+    getOrder = new GetOrder(repositoryFactory);
   });
 
   it('should NOT accept a order with invalid CPF', async () => {
@@ -194,7 +174,6 @@ describe('Main', () => {
         1, 'A', 1000, 1, 1, 1, 1
       ));
 
-    checkout = new Checkout()
     const input = {
       cpf: '503.348.770-16',
       items: [
@@ -215,7 +194,6 @@ describe('Main', () => {
       description: 'A',
       price: 1000,
     });
-    checkout = new Checkout()
     const input = {
       cpf: '503.348.770-16',
       items: [
@@ -244,5 +222,47 @@ describe('Main', () => {
     await checkout.execute(input);
     const output = await getOrder.execute(idOrder);
     expect(output.total).toBe(6090);
+  });
+
+  it("should be able to create an order with 3 items and generate order code", async function () {
+    const orderRepository = repositoryFactory.createOrderRepository();
+    await orderRepository.clear();
+    await checkout.execute({
+      idOrder: crypto.randomUUID(),
+      cpf: "407.302.170-27",
+      items: [
+        { idProduct: 1, quantity: 1 },
+        { idProduct: 2, quantity: 1 },
+        { idProduct: 3, quantity: 3 }
+      ],
+      email: "john.doe@gmail.com"
+    });
+    await checkout.execute({
+      idOrder: crypto.randomUUID(),
+      cpf: "407.302.170-27",
+      items: [
+        { idProduct: 1, quantity: 1 },
+        { idProduct: 2, quantity: 1 },
+        { idProduct: 3, quantity: 3 }
+      ],
+      email: "john.doe@gmail.com"
+    });
+    const idOrder = crypto.randomUUID();
+    const input = {
+      idOrder,
+      cpf: "407.302.170-27",
+      items: [
+        { idProduct: 1, quantity: 1 },
+        { idProduct: 2, quantity: 1 },
+        { idProduct: 3, quantity: 3 }
+      ],
+      email: "john.doe@gmail.com",
+      date: new Date("2022-01-01T10:00:00"),
+      from: "88015600",
+      to: "22030060"
+    };
+    await checkout.execute(input);
+    const output = await getOrder.execute(idOrder);
+    expect(output.code).toBe("202200000004");
   });
 });

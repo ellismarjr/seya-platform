@@ -2,6 +2,7 @@ import express, { Request, Response } from 'express';
 import { Checkout } from './Checkout';
 import { ProductRepositoryDatabase } from './ProductRepositoryDatabase';
 import { CouponRepositoryDatabase } from './CouponRepositoryDatabase';
+import { DatabaseRepositoryFactory } from './DatabaseRepositoryFactory';
 
 interface Product {
   id: number;
@@ -24,9 +25,8 @@ const app = express();
 app.use(express.json());
 
 app.post('/checkout', async (request: Request, response: Response) => {
-  const productRepository = new ProductRepositoryDatabase();
-  const couponRepository = new CouponRepositoryDatabase();
-  const checkout = new Checkout(productRepository, couponRepository);
+  const repositoryFactory = new DatabaseRepositoryFactory();
+  const checkout = new Checkout(repositoryFactory);
 
   try {
     const output = await checkout.execute(request.body)
