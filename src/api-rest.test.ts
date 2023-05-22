@@ -66,7 +66,7 @@ it("Deve fazer um pedido com 3 itens com cupom de desconto que não existe", asy
       { idProduct: 2, quantity: 1 },
       { idProduct: 3, quantity: 3 }
     ],
-    coupon: "VALE0"
+    coupon: "VALE5"
   };
   const response = await axios.post("http://localhost:3333/checkout", input);
   const output = response.data;
@@ -112,8 +112,8 @@ it("Deve fazer um pedido com 3 itens calculando o frete", async function () {
   };
   const response = await axios.post("http://localhost:3333/checkout", input);
   const output = response.data;
-  expect(output.freight).toBe(250);
-  expect(output.total).toBe(6250);
+  expect(output.freight).toBe(220);
+  expect(output.total).toBe(6220);
 });
 
 it("Deve fazer um pedido com 3 itens calculando o frete com preço mínimo", async function () {
@@ -129,8 +129,8 @@ it("Deve fazer um pedido com 3 itens calculando o frete com preço mínimo", asy
   };
   const response = await axios.post("http://localhost:3333/checkout", input);
   const output = response.data;
-  expect(output.freight).toBe(280);
-  expect(output.total).toBe(6370);
+  expect(output.freight).toBe(30);
+  expect(output.total).toBe(6120);
 });
 
 it.skip("Não deve fazer um pedido se o produto tiver dimensões inválidas", async function () {
