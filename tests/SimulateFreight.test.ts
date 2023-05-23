@@ -1,7 +1,7 @@
-import { describe, expect, it } from "vitest";
-import { ProductRepositoryDatabase } from "./ProductRepositoryDatabase";
-import { SimulateFreight } from "./SimulateFreight";
-import { DatabaseRepositoryFactory } from "./DatabaseRepositoryFactory";
+import { afterEach, describe, expect, it } from "vitest";
+import { SimulateFreight } from "../src/SimulateFreight";
+import { DatabaseRepositoryFactory } from "../src/DatabaseRepositoryFactory";
+import { PgPromiseAdapter } from "../src/PgPromiseAdapter";
 
 describe('SimulateFreight', () => {
   it('should be able to simulate freight and return freight for a order', async () => {
@@ -14,9 +14,12 @@ describe('SimulateFreight', () => {
       from: '88015600',
       to: "22030060"
     }
-    const repositorFactory = new DatabaseRepositoryFactory();
+    const connection = new PgPromiseAdapter();
+    await connection.connect();
+    const repositorFactory = new DatabaseRepositoryFactory(connection);
     const simulateFreight = new SimulateFreight(repositorFactory);
     const output = await simulateFreight.execute(input);
     expect(output.freight).toBe(280);
+    await connection.close();
   })
 });

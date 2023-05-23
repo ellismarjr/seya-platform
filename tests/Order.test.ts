@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import crypto from "crypto";
-import { Coupon } from "./Coupon";
-import { Order } from "./Order";
-import { Product } from "./Product";
+import { Coupon } from "../src/Coupon";
+import { Order } from "../src/Order";
+import { Product } from "../src/Product";
 
 describe('Order', () => {
   it('should be able to create an empty order', () => {

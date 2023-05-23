@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { Product } from "./Product";
+import { Product } from "../src/Product";
 
 describe('Product', () => {
   it('should calculate volume', () => {

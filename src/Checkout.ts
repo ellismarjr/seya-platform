@@ -22,7 +22,7 @@ export class Checkout {
   }
 
   async execute(input: Input): Promise<Output> {
-    const sequence = await this.orderRepository.count() + 1;
+    const sequence = await this.orderRepository.count();
     const order = new Order(input.idOrder, input.cpf, input.date, sequence + 1);
     for (const item of input.items) {
       const product = await this.productRepository.get(item.idProduct);

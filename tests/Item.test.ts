@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { Product } from "./Product";
-import { Item } from "./Item";
+import { Product } from "../src/Product";
+import { Item } from "../src/Item";
 
 describe('Item', () => {
   it('should NOT be able to create an item with invalid quantity', () => {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { Coupon } from "./Coupon";
+import { Coupon } from "../src/Coupon";
 
 describe('Coupon', () => {
   it('should be able to test if coupon is valid', () => {

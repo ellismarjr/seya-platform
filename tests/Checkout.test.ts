@@ -1,29 +1,35 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import sinon from 'sinon';
 import crypto from 'crypto';
+import { Checkout } from '../src/Checkout';
+import { DatabaseConnection } from '../src/DatabaseConnection';
+import { DatabaseRepositoryFactory } from '../src/DatabaseRepositoryFactory';
+import { GetOrder } from '../src/GetOrder';
+import { PgPromiseAdapter } from '../src/PgPromiseAdapter';
+import { Product } from '../src/Product';
+import { ProductRepositoryDatabase } from '../src/ProductRepositoryDatabase';
+import { RepositoryFactory } from '../src/RepositoryFactory';
 
-import { Checkout } from './Checkout';
-import { ProductRepositoryDatabase } from './ProductRepositoryDatabase';
-import { ProductRepository } from './ProductRepository';
-import { CouponRepository } from './CouponRepository';
-import { GetOrder } from './GetOrder';
-import { OrderRepository } from './OrderRepository';
-import { Product } from './Product';
-import { Coupon } from './Coupon';
-import { DatabaseRepositoryFactory } from './DatabaseRepositoryFactory';
-import { RepositoryFactory } from './RepositoryFactory';
+
 
 describe('Main', () => {
   let checkout: Checkout;
   let getOrder: GetOrder;
   let repositoryFactory: RepositoryFactory;
+  let connection: DatabaseConnection;
 
 
-  beforeEach(() => {
-    repositoryFactory = new DatabaseRepositoryFactory();
+  beforeEach(async () => {
+    connection = new PgPromiseAdapter();
+    await connection.connect();
+    repositoryFactory = new DatabaseRepositoryFactory(connection);
     checkout = new Checkout(repositoryFactory);
     getOrder = new GetOrder(repositoryFactory);
   });
+
+  afterEach(async () => {
+    await connection.close();
+  })
 
   it('should NOT accept a order with invalid CPF', async () => {
     const input = {
@@ -31,7 +37,7 @@ describe('Main', () => {
       items: []
     }
 
-    expect(() => checkout.execute(input)).rejects.toThrow(new Error('Invalid CPF'));
+    await expect(() => checkout.execute(input)).rejects.toThrow(new Error('Invalid CPF'));
 
   });
 
@@ -117,7 +123,7 @@ describe('Main', () => {
       ]
     }
 
-    expect(() => checkout.execute(input)).rejects.toThrow(new Error('Invalid quantity'));
+    await expect(() => checkout.execute(input)).rejects.toThrow(new Error('Invalid quantity'));
   });
 
   it('should NOT be able to create a order with duplicate items', async () => {
@@ -129,7 +135,7 @@ describe('Main', () => {
       ]
     }
 
-    expect(() => checkout.execute(input)).rejects.toThrow(new Error('Duplicated item'));
+    await expect(() => checkout.execute(input)).rejects.toThrow(new Error('Duplicated item'));
   });
 
   it('should be able to create a order with 3 products and calculate frete', async () => {
@@ -263,6 +269,6 @@ describe('Main', () => {
     };
     await checkout.execute(input);
     const output = await getOrder.execute(idOrder);
-    expect(output.code).toBe("202200000004");
+    expect(output.code).toBe("202200000003");
   });
 });

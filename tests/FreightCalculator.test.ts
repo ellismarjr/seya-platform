@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { Product } from "./Product";
-import { FreightCalculator } from "./FreightCalculator";
+import { FreightCalculator } from "../src/FreightCalculator";
+import { Product } from "../src/Product";
 
 describe('FreightCalculator', () => {
   it('should calculate freight', () => {

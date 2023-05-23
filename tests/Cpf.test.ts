@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { Cpf } from "./Cpf";
+import { Cpf } from "../src/Cpf";
 
 describe('Cpf', () => {
   it.each([
