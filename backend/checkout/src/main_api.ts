@@ -1,0 +1,13 @@
+import { DatabaseRepositoryFactory } from './infra/factory/DatabaseRepositoryFactory';
+import { PgPromiseAdapter } from './infra/database/PgPromiseAdapter';
+import { ExpressAdapter } from './infra/http/ExpressAdapter';
+import { HttpController } from './infra/http/HttpController';
+import { UseCaseFactory } from './infra/factory/UseCaseFactory';
+const connection = new PgPromiseAdapter();
+connection.connect();
+const repositoryFactory = new DatabaseRepositoryFactory(connection);
+const useCaseFactory = new UseCaseFactory(repositoryFactory);
+const httpServer = new ExpressAdapter();
+// const httpServer = new HapiAdapter();
+new HttpController(httpServer, useCaseFactory);
+httpServer.listen(3333);
