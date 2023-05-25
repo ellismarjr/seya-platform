@@ -11,7 +11,7 @@ export class HttpController {
     })
 
     httpServer.on('get', "/products", async (params: any, body: any, headers: any) => {
-      const contentType = headers['content-type'];
+      const contentType = headers['Content-Type'] || 'application/json';
       const getProducts = useCaseFactory.createGetProducts(contentType);
       const output = await getProducts.execute();
       return output;
